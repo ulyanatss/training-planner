@@ -1,3 +1,4 @@
+```python
 import tkinter as tk
 from tkinter import ttk, messagebox
 import json
@@ -69,14 +70,18 @@ class TrainingPlanner:
 
         self.refresh_table()
 
-    # Валидация
+    # Валидация (улучшена: проверка пустых полей и положительного числа)
     def validate_inputs(self, date_str, type_str, duration_str):
         if not type_str.strip():
             return False, "Тип тренировки не может быть пустым."
+        if not date_str.strip():
+            return False, "Дата не может быть пустой."
         try:
             datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             return False, "Дата должна быть в формате ГГГГ-ММ-ДД."
+        if not duration_str.strip():
+            return False, "Длительность не может быть пустой."
         try:
             duration = int(duration_str)
             if duration <= 0:
@@ -85,16 +90,17 @@ class TrainingPlanner:
             return False, "Длительность должна быть целым положительным числом."
         return True, ""
 
-    # Добавление записи
+    # Добавление записи (исправлены отступы!)
     def add_training(self):
-        date = self.date_entry.get().strip()
+        date = s
+elf.date_entry.get().strip()
         ttype = self.type_entry.get().strip()
         duration = self.duration_entry.get().strip()
 
         valid, msg = self.validate_inputs(date, ttype, duration)
         if not valid:
             messagebox.showerror("Ошибка ввода", msg)
-         return
+            return
 
         self.trainings.append({
             "date": date,
@@ -105,7 +111,7 @@ class TrainingPlanner:
         self.type_entry.delete(0, tk.END)
         self.duration_entry.delete(0, tk.END)
         self.refresh_table()
-        self.save_data()  # автоматическое сохранение
+        self.save_data()
 
     # Заполнение таблицы (с фильтром или без)
     def refresh_table(self, filtered_list=None):
@@ -127,7 +133,7 @@ class TrainingPlanner:
                 filtered.append(t)
         self.refresh_table(filtered)
 
-    # Работа с JSON
+    # Сохранение в JSON
     def save_data(self):
         try:
             with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -136,6 +142,7 @@ class TrainingPlanner:
         except Exception as e:
             messagebox.showerror("Ошибка сохранения", str(e))
 
+    # Загрузка из JSON (с обработкой пустого файла и повреждённого содержимого)
     def load_data(self):
         if not os.path.exists(DATA_FILE):
             self.trainings = []
@@ -143,14 +150,19 @@ class TrainingPlanner:
             return
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
-                self.trainings = json.load(f)
+                content = f.read().strip()
+                if not content:
+                    self.trainings = []
+                else:
+                    self.trainings = json.loads(content)
             self.refresh_table()
             print(f"Данные загружены из {DATA_FILE}")
-        except Exception as e:
-            messagebox.showerror("Ошибка загрузки", str(e))
+        except (json.JSONDecodeError, Exception) as e:
+            messagebox.showerror("Ошибка загрузки", f"Не удалось прочитать файл JSON: {e}")
             self.trainings = []
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = TrainingPlanner(root)
     root.mainloop()
+```
